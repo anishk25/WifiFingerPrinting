@@ -27,16 +27,19 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 
 public class MainActivity extends ActionBarActivity implements OnClickListener {
 
 	
-	private static final int SCAN_LIMIT = 10;
-	private int scanNumber = 0;;
+	private static final int SCAN_LIMIT = 15;
+	private int scanNumber = 0;
+	private static int num_scans = 0;
 	private Button startStopButton;
 	private Button recordRSSIButton;
 	private EditText etRecordNumber;
+	private boolean recorded = false;
 	
 	private WifiManager mainWifi;
     private WifiReceiver receiverWifi;
@@ -91,9 +94,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
+        
         int id = item.getItemId();
         if (id == R.id.action_settings) {
             return true;
@@ -117,21 +118,26 @@ public class MainActivity extends ActionBarActivity implements OnClickListener {
 	
 	private void beginScan(){
 		wifiAverages.clear();
+		num_scans = 0;
+		scanNumber++;
+		recorded = false;
 		for(int i = 0 ; i < SCAN_LIMIT; i++){
+			num_scans++;
 			mainWifi.startScan();
 		}
-		scanNumber++;
+		
 	}
 	
 	private void recordStartInFile(){
 		scanNumber = 0;
-		String nums = "Record Range:" + etRecordNumber.getText().toString()+ "\n";
+		String nums = "Range:" + etRecordNumber.getText().toString()+ "\n";
 		try {
 			fileOutputStream = new FileOutputStream(resultsFile, true);
 			
 			fileOutputStream.write(nums.getBytes());
 			fileOutputStream.flush();
 			fileOutputStream.close();
+			showToast("Range Recorded!");
 		} catch (FileNotFoundException e) {			
 		} catch (IOException e) {			
 		}	
@@ -170,9 +176,18 @@ public class MainActivity extends ActionBarActivity implements OnClickListener {
             		}
             	}
             }
-            writeAveragesToFile();
+            if(num_scans >= SCAN_LIMIT && !recorded){
+            	recorded = true;
+            	writeAveragesToFile();
+            	showToast("RSSI Recorded!");
+            }
         }        
     }
+	
+	private void showToast(String text){
+		Toast toast = Toast.makeText(getApplicationContext(),text,Toast.LENGTH_SHORT);
+		toast.show();
+	}
 	
 	
 }
